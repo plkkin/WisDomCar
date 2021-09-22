@@ -2,6 +2,7 @@ import configparser
 import time
 
 import document as document
+from selenium import webdriver
 
 from framework.logger import Logger
 
@@ -13,7 +14,7 @@ class BasePage(object):
     __instance = None
     __init_flag = False  # 创建类属性用于__init__方法中的判断
 
-    def __new__(cls, name):
+    def __new__(cls):
         if cls.__instance is None:
             cls.__instance = object.__new__(cls)
             return cls.__instance
@@ -21,9 +22,12 @@ class BasePage(object):
             # return 上一次创建的对象的引用
             return cls.__instance
 
-    def __init__(self, driver):
+    def __init__(self):
         if not BasePage.__init_flag:
-            self.driver = driver
+            self.driver = webdriver.Chrome(r'C:\Users\Plkkin\AppData\Local\Google\Chrome\Application\chromedriver.exe')
+            self.driver.implicitly_wait(5)
+            self.driver.maximize_window()
+
             self.sys_address = '218_server'  # 连接的服务器地址
             self.logger = Logger(logger='Message').getlog()
 
@@ -54,7 +58,13 @@ class BasePage(object):
     def get_ini(self, option, host):
         return self.cf.get(option, host)
 
-    def find_element_by_css_selector(self, placeholder, text):
+    def find_element_by_css_selector(self, text):
+        return self.driver.find_element_by_css_selector(text)
+
+    def find_element_by_xpath(self, text):
+        return self.driver.find_element_by_xpath(text)
+
+    def find_css_selector_placeholder(self, placeholder, text):
         self.logger.info('预输入框%s输入内容：%s' % (placeholder, text))
         return self.driver.find_element_by_css_selector("[placeholder='%s']" % placeholder).send_keys(text)
 
@@ -90,3 +100,7 @@ class BasePage(object):
         """
         self.logger.info('清除预输入框"%s"的内容', name)
         return self.driver.find_element_by_css_selector("[placeholder='%s']" % name).clear()
+
+    def quit(self):
+        self.logger.info('退出浏览器')
+        return self.driver.quit()
